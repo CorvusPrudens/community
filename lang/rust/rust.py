@@ -7,12 +7,37 @@ mod = Module()
 mod.list("code_type_modifier", desc="List of type modifiers for active language")
 mod.list("code_macros", desc="List of macros for active language")
 mod.list("code_trait", desc="List of traits for active language")
+mod.list("rust_crates", desc="List of common rust crates")
+mod.list("closed_format_strings", desc="List of common closed rust format strings")
+mod.list("inner_format_strings", desc="List of common rust format strings")
+mod.list("rust_types", desc="List of common rust types")
+mod.list("code_containing_types", desc="List of common rust container types")
+mod.list("formatted_functions", desc="List of common rust formatted functions")
+mod.list("rust_allocatable_types", desc="List of common rust allocatable types")
+mod.list("rust_std_modules", desc="List of common rust std modules")
+mod.list("rust_targets", desc="List of common rust compile targets")
+mod.list("rust_toolchains", desc="List of common rust toolchains")
 
 
 @mod.action_class
 class Actions:
     def code_state_implements():
         """Inserts implements block, positioning the cursor appropriately"""
+
+    def code_insert_if_let_okay():
+        """Inserts if let ok block, positioning the cursor appropriately"""
+
+    def code_insert_if_let_some():
+        """Inserts if let some block, positioning the cursor appropriately"""
+
+    def code_insert_if_let_error():
+        """Inserts if let error block, positioning the cursor appropriately"""
+
+    def code_insert_trait_annotation(type: str):
+        """Inserts type annotation for implementor of trait"""
+
+    def code_insert_return_trait(type: str):
+        """Inserts a return type for implementor of trait"""
 
     def code_insert_macro(text: str, selection: str):
         """Inserts a macro and positions the cursor appropriately"""
@@ -37,9 +62,22 @@ class Actions:
 
 
 ctx = Context()
+# NOTE: This used to have user.rust_apps, but deleted during community merge. Re-add it if stuff breaks
 ctx.matches = r"""
 code.language: rust
 """
+
+ctx.lists["user.rust_std_modules"] = {
+    "compare": "cmp",
+    "convert": "convert",
+    "format": "fmt",
+    "I O": "io",
+}
+
+sugar_types = {
+    "self": "Self",
+    "unit": "()"
+}
 
 scalar_types = {
     "eye eight": "i8",
@@ -58,6 +96,7 @@ scalar_types = {
     "float thirty two": "f32",
     "float sixty four": "f64",
     "boolean": "bool",
+    "bool": "bool",
     "character": "char",
 }
 
@@ -65,6 +104,7 @@ compound_types = {
     "tuple": "()",
     "array": "[]",
 }
+
 
 standard_library_types = {
     "box": "Box",
@@ -77,10 +117,43 @@ standard_library_types = {
     "see string slice": "&CStr",
     "option": "Option",
     "result": "Result",
+    "okay": "Ok",
+    "error": "Err",  # TODO: These aren't really types I guess
+    "big error": "Error",
     "hashmap": "HashMap",
     "hash set": "HashSet",
     "reference count": "Rc",
+    "path": "Path",
+    "path buf": "PathBuf",
+    "reference cell": "RefCell",
+    "reference mute": "RefMut",
+    "phantom data": "PhantomData",
 }
+
+# TODO: This needs to get integrated into other lists rather than duplication
+allocatable_types = {
+    "vector": "Vec",
+    "string": "String",
+    "path": "Path",
+}
+ctx.lists["user.rust_allocatable_types"] = allocatable_types
+
+# types that allow us say for example 'vector of you eight' to get Vec<u8>
+containing_types = {
+    "vector": "Vec",
+    "veck": "Vec",
+    "okay": "Ok",
+    "result": "Result",
+    "option": "Option",
+    "reference count": "Rc",
+    "arc": "Arc",
+    "cell": "Cell",
+    "ref cell": "RefCell",
+    "mutex": "Mutex",
+    "rw lock": "RwLock",
+    "box": "Box",
+}
+
 
 standard_sync_types = {
     "arc": "Arc",
@@ -96,6 +169,7 @@ standard_sync_types = {
 
 all_types = {
     **scalar_types,
+    **sugar_types,
     **compound_types,
     **standard_library_types,
     **standard_sync_types,
@@ -103,16 +177,33 @@ all_types = {
 
 standard_function_macros = {
     "panic": "panic!",
-    "format": "format!",
     "concatenate": "concat!",
+    "con cat": "concat!",
+    "to do": "todo!",
+    "debug": "dbg!",
+    "sys call": "syscall!",
+}
+
+string_formatted_standard_function_macros = {
+    "format": "format!",
     "print": "print!",
     "print line": "println!",
     "error print line": "eprintln!",
-    "to do": "todo!",
+    "write": "write!",
+    "write line": "writeln!",
 }
+
 
 standard_array_macros = {
     "vector": "vec!",
+}
+
+common_implementations = {
+    "ok or": "ok_or",
+    "ok or else": "ok_or_else",
+    "unwrap": "unwrap",
+    "await": "await",
+    "some": "Some",
 }
 
 standard_block_macros = {
@@ -123,6 +214,7 @@ logging_macros = {
     "debug": "debug!",
     "info": "info!",
     "warning": "warn!",
+    "warn": "warn!",
     "error": "error!",
 }
 
@@ -132,9 +224,20 @@ testing_macros = {
     "assert not equal": "assert_ne!",
 }
 
+errno_values = {
+    "success": "ESUCCESS",  # 0
+    "permission denied": "EPERM",  # 1
+}
+
+error_methods = {"raw os error": "raw_os_error"}
+
+all_string_formatted_functions_macros = {
+    **string_formatted_standard_function_macros,
+    **logging_macros,
+}
+
 all_function_macros = {
     **standard_function_macros,
-    **logging_macros,
     **testing_macros,
 }
 
@@ -171,20 +274,69 @@ iterator_traits = {
     "iterator": "Iterator",
 }
 
+dereference_traits = {
+    "as reference": "AsRef"
+}
+
+common_traits = {
+    "partial order": "PartialOrd",
+    "order": "Ord",
+    "partial equal": "PartialEqual",
+    "equal": "Eq",
+}
+
 all_traits = {
     **closure_traits,
     **conversion_traits,
     **iterator_traits,
+    **dereference_traits,
+    **common_traits,
 }
 
 
 # tag: libraries_gui
-ctx.lists["user.code_libraries"] = {
+
+# TODO: A lot of people refer to these as "stood" something, so we should possibly include a optional
+# "stood" prefix command disk for these
+standard_imports = {
+    "atomic": "std::sync::atomic",
     "eye oh": "std::io",
     "file system": "std::fs",
+    "F S": "std::fs",
+    "path": "std::path",
     "envy": "std::env",
     "collections": "std::collections",
+    "process": "std::process",
+    "thread": "std::thread",
+    "sync": "std::sync",
+    "future": "std::future",
+    "pin": "std::pin",
+    "error": "std::error",
+    "error error": "std::error::Error",
+    "error kind": "std::io::ErrorKind",
+    "from stir": "std::str::FromStr",
+    "channel": "std::sync::mpsc",
 }
+tokio_imports = {"tracing": "tracing::{info};"}
+common_imports = {
+    "glob": "glob::glob",
+    "serde json": "serde_json::json",
+    "serde": "serde::{Serialize, Deserialize}",
+    "log": "log::{debug, error, info, warn}",
+    "iterator tools": "itertools::Itertools",
+    "iter tools": "itertools::Itertools",
+    "lazy static": "lazy_static::lazy_static",
+    "perfect hash map": "phf::phf_map",
+    "follow redirects": "follow_redirects::ClientExt",
+    "clap parser": "clap::{App, Arg, ArgMatches, Parser, SubCommand}",
+}
+
+ctx.lists["user.code_libraries"] = {
+    **standard_imports,
+    **tokio_imports,
+    **common_imports,
+}
+
 
 # tag: functions_common
 ctx.lists["user.code_common_function"] = {
@@ -192,7 +344,45 @@ ctx.lists["user.code_common_function"] = {
     "catch unwind": "catch_unwind",
     "iterator": "iter",
     "into iterator": "into_iter",
+    "into iter": "into_iter",
     "from iterator": "from_iter",
+    "from iter": "from_iter",
+    "as stir": "as_str",
+    "to string": "to_string",
+    "to string lossy": "to_string_lossy",
+    "to stir": "to_str",
+    "as bytes": "as_bytes",
+    "to bytes": "to_bytes",
+    "as pointer": "as_ptr",
+    "as mutable pointer": "as_mut_ptr",
+    "as reference": "as_ref",
+    "as ref": "as_ref",
+    "as mute": "as_mut",
+    "is some": "is_some",
+    "is none": "is_none",
+    "is ok": "is_ok",
+    "is error": "is_err",
+    "is empty": "is_empty",
+    "to path buf": "to_path_buf",
+    "unwrap": "unwrap",
+    "unwrap or": "unwrap_or",
+    "unwrap or else": "unwrap_or_else",
+    "expect": "expect",
+    "to vec": "to_vec",
+    "to vector": "to_vec",
+    "trim": "trim",
+    "split white space": "split_whitespace",
+    "display": "display",
+    "or insert": "or_insert",
+    "or insert with": "or_insert_with",
+    "cloned": "cloned",
+    "clone": "clone",
+    "is digit": "is_digit",
+    "is alphanum": "is_alphanumeric",
+    "is ascii": "is_ascii",
+    "is ascii hex digit": "is_ascii_hex_digit",
+    "in to": "into",
+    **common_implementations,
     **all_macros,
 }
 
@@ -208,18 +398,91 @@ ctx.lists["user.code_type_modifier"] = {
     "borrowed mute": "&mut ",
     "mutable borrowed": "&mut ",
     "mute borrowed": "&mut ",
+    "dynamic": "dyn ",
+    "dine": "dyn ",
 }
 
+ctx.lists["user.rust_crates"] = {
+    "native T L S": "native_tls",
+    "hyper": "hyper",
+    "tokyo": "tokio",
+    "futures": "futures",
+    "async standard": "async_std",
+    "follow redirects": "follow_redirects",
+    "log": "log",
+    "request": "reqwest",
+    "clap": "clap",
+    "cap stone": "capstone",
+    "key stone": "keystone_engine",  # official crate is buggy
+    "goblin": "goblin",
+    "random": "rand",
+    "walk dir": "walkdir",
+    "log": "log",
+    "open S S L": "openssl",
+    "serde": "serde",
+    "serde JSON": "serde_json",
+    "thirty four": "thirtyfour",
+    "simple log": "simplelog",
+    "async recursion": "async_recursion",
+    "serde": "serde",
+    "serde json": "serde_json",
+    "ray on": "rayon",
+    "shaw two": "sha2",
+    "glob": "glob",
+    "iter tools": "itertools",
+    "lazy static": "lazy_static",
+    "which": "which",
+    "base sixty four": "base64",
+    "regex": "regex",
+}
 
-@ctx.capture("user.code_type", rule="[{user.code_type_modifier}] {user.code_type}")
-def code_type(m) -> str:
-    """Returns a macro name"""
-    return "".join(m)
+ctx.lists["user.rust_toolchains"] = {
+    "stable": "stable",
+    "nightly": "nightly",
+    "beta": "beta",
+}
+
+# TODO: These are a little loose with the architecture's atm
+ctx.lists["user.rust_targets"] = {
+    "windows M S V C": "x86_64-pc-windows-msvc",
+    "windows G N U": "x86_64-pc-windows-gnu",
+    "mac O S": "x86_64-apple-darwin",
+    "mac O S arm": "aarch64-apple-darwin",
+    "linux": "x86_64-unknown-linux-gnu",
+    "linux muscle": "x86_64-unknown-linux-musl",
+    "linux arm sixty four": "aarch64-unknown-linux-gnu",
+    "linux muscle arm sixty four": "aarch64-unknown-linux-musl",
+    "linux arm": "armv7-unknown-linux-gnueabihf",
+    "linux muscle arm": "armv7-unknown-linux-musleabihf",
+}
+
+ctx.lists["user.formatted_functions"] = {**all_string_formatted_functions_macros}
+
+
+ctx.lists["user.closed_format_strings"] = {
+    "hex": r"{:#x}",
+    "octal": r"{:#o}",
+    "binary": r"{:#b}",
+    "decimal": r"{:#}",
+    "float": r"{:.2}",
+    "debug": r"{:?}",
+}
+
+ctx.lists["user.inner_format_strings"] = {
+    "hex": r":#x",
+    "octal": r":#o",
+    "binary": r":#b",
+    "decimal": r":#",
+    "float": r":.2",
+    "debug": r":?",
+}
 
 
 ctx.lists["user.code_macros"] = all_macros
 
 ctx.lists["user.code_trait"] = all_traits
+
+ctx.lists["user.code_containing_types"] = {**containing_types}
 
 
 @ctx.action_class("user")
@@ -235,6 +498,11 @@ class UserActions:
         actions.auto_insert("/// ")
 
     # tag: imperative
+
+    def code_block():
+        actions.auto_insert("{}")
+        actions.edit.left()
+        actions.key("enter")
 
     def code_state_if():
         actions.auto_insert("if ")
@@ -336,7 +604,7 @@ class UserActions:
     def code_insert_return_type(type: str):
         actions.auto_insert(f" -> {type}")
 
-    # tag: functions_gui
+    # tag: functions_common
 
     def code_insert_function(text: str, selection: str):
         code_insert_function_or_macro(text, selection, "(", ")")
@@ -462,6 +730,15 @@ class UserActions:
     def code_operator_structure_dereference():
         actions.auto_insert("*")
 
+    def code_insert_if_let_some():
+        actions.user.insert_between("if let Some(", ")")
+
+    def code_insert_if_let_okay():
+        actions.user.insert_between("if let Ok(", ")")
+
+    def code_insert_if_let_error():
+        actions.user.insert_between("if let Err(", ")")
+
     def code_state_implements():
         actions.auto_insert("impl  {}")
         actions.edit.left()
@@ -469,6 +746,12 @@ class UserActions:
         actions.edit.up()
         actions.edit.line_end()
         repeat_call(2, actions.edit.left)
+
+    def code_insert_trait_annotation(type: str):
+        actions.auto_insert(f": impl {type}")
+
+    def code_insert_return_trait(type: str):
+        actions.auto_insert(f" -> impl {type}")
 
     def code_insert_macro(text: str, selection: str):
         if text in all_array_macro_values:
