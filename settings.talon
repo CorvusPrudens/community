@@ -2,6 +2,13 @@ settings():
     # Adjust the scale of the imgui
     imgui.scale = 1.3
 
+    # Uncomment to set the speech timeout. This is the amount of time after you stop
+    # speaking until Talon starts processing the spoken audio. Default is 0.3s.
+    # speech.timeout = 0.3
+
+    # Uncomment to enable dark mode for talon help menus
+    # imgui.dark_mode = true
+
     # If `true`, automatically show the picker GUI when the file manager has focus
     user.file_manager_auto_show_pickers = false
 
@@ -10,6 +17,9 @@ settings():
 
     # Set the number of contexts to display per help page
     user.help_max_contexts_per_page = 20
+
+    # Uncomment to always sort help contexts alphabetically.
+    # user.help_sort_contexts_by_specificity = false
 
     # Set the scroll amount for continuous scroll/gaze scroll
     user.mouse_continuous_scroll_amount = 80
@@ -67,6 +77,15 @@ settings():
     # -width windows are resized to stay full-height/width.
     # user.window_snap_screen = "size aware"
 
+    # Puts Talon into sleep mode if no commands are spoken for a defined period of time.
+    # user.listening_timeout_minutes = 3
+
 # Uncomment to enable the curse yes/curse no commands (show/hide mouse cursor).
 # See issue #688 for more detail: https://github.com/talonhub/community/issues/688
 # tag(): user.mouse_cursor_commands_enable
+
+# Uncomment the below to disable support for saying numbers without a prefix.
+# By default saying "one" would write "1", however many users find this behavior
+# prone to false positives. If you uncomment this, you will need to say
+# "numb one" to write "1". Note that this tag will eventually be activated by default
+# tag(): user.prefixed_numbers
