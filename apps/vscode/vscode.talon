@@ -74,6 +74,12 @@ file hunt [<user.text>]:
     user.vscode("workbench.action.quickOpen")
     sleep(50ms)
     insert(text or "")
+hop [<user.text>]:
+    user.vscode("workbench.action.quickOpen")
+    sleep(50ms)
+    insert(text or "")
+    sleep(50ms)
+    key(enter)
 file hunt (pace | paste):
     user.vscode("workbench.action.quickOpen")
     sleep(50ms)

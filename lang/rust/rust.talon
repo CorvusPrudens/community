@@ -129,9 +129,9 @@ macro wrap {user.code_macros}:
     user.code_insert_macro(code_macros, edit.selected_text())
 
 ## rust specific document comments
-dock comment: insert("/// ")
-inner dock comment: user.code_comment_documentation_inner()
-inner block dock comment: user.code_comment_documentation_block_inner()
+documentation: insert("/// ")
+inner documentation: user.code_comment_documentation_inner()
+inner block documentation: user.code_comment_documentation_block_inner()
 
 state returns: " -> "
 # TODO: They should use a list
