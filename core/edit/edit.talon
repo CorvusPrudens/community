@@ -157,7 +157,7 @@ nope: edit.undo()
 redo that: edit.redo()
 
 # Save
-scribe: edit.save()
+disk: edit.save()
 file save all: edit.save_all()
 
 [go] line mid: user.line_middle()

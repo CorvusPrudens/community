@@ -45,6 +45,38 @@ state enum [<user.text>]:
 
 toggle use: user.code_toggle_libraries()
 
+factory [<user.text>]:
+    insert("::")
+    insert(user.formatted_text(text or "", "SNAKE_CASE"))
+    open = "("
+    close = ")"
+    user.insert_between(open, close)
+
+method iterator:
+    insert(".iter()")
+
+method into iterator:
+    insert(".into_iter()")
+
+method [<user.text>]:
+    insert(".")
+    insert(user.formatted_text(text or "", "SNAKE_CASE"))
+    open = "("
+    close = ")"
+    user.insert_between(open, close)
+
+argument [<user.text>]:
+    insert(user.formatted_text(text or "", "SNAKE_CASE"))
+    insert(": ")
+
+coal | cole: insert(":")
+
+scope:
+    open = "{"
+    close = "}"
+    user.insert_between(open, close)
+    key(enter)
+
 # TODO: It would be nice if there was a way to not let text match on certain words, because this conflict with
 # the let type command below
 
@@ -147,7 +179,13 @@ state right [inclusive] range: "..="
 state left [inclusive] range: "=.."
 state range: ".."
 state at range: "@ .."
-[state] turbo fish: "::<>"
+
+[state] turbo fish:
+    insert("::")
+    open = "<"
+    close = ">"
+    user.insert_between(open, close)
+
 turbo crate: "crate::"
 turbo stood: "std::"
 [state] turbo <user.word>: "{word}::"
@@ -265,7 +303,7 @@ state component <user.text>:
 state view:
     user.insert_between("view! {", "}")
 
-state (oto | auto): insert("auto") 
+state (oto | auto): insert("auto")
 
 view divide:
     user.insert_between("<div>", "</div>")
@@ -291,7 +329,7 @@ state collect as <user.code_containing_type> of [<user.code_type>]:
     type = user.code_type or ""
     insert("collect::{code_containing_type}<{type}>()")
 
-terminate: 
+terminate:
     edit.line_end()
     key(';')
     edit.line_insert_down()
